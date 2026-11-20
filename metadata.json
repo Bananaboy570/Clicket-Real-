@@ -1,0 +1,6 @@
+{
+  "name": "Blockit Circus Market & Trivia",
+  "description": "A Blockit-style trivia and pack-opening game featuring the custom Circus Pack (20 Tokens), exact blooks, authentic Market GUI, Blook Locker, and playable trivia games to earn tokens.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
