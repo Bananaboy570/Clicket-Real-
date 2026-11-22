@@ -4,10 +4,11 @@ export interface BlookItem {
   id: string;
   name: string;
   rarity: Rarity;
-  chance: number; // Exact percentage shown in PNG
-  chanceLabel: string; // e.g., "17%", "8%", "3%", "0.3%", "0.05%", "0.03%", "0.002%"
+  chance: number; // Exact percentage
+  chanceLabel: string; // e.g., "17%", "15%", "7%", "3.57%", "0.4%", "0.03%"
   sellPrice: number;
   packId: string;
+  imageUrl?: string;
 }
 
 export interface PackInfo {
@@ -16,6 +17,8 @@ export interface PackInfo {
   price: number;
   bgColor: string;
   borderColor: string;
+  revealBgColor: string;
+  coverImageUrl?: string;
   blooks: BlookItem[];
 }
 
@@ -26,6 +29,15 @@ export const RARITY_COLORS: Record<Rarity, string> = {
   Legendary: '#ff910f',// Orange
   Chroma: '#00ccff',   // Cyan
   Mystic: '#9900ff',   // Purple
+};
+
+export const RARITY_RANK: Record<Rarity, number> = {
+  Uncommon: 1,
+  Rare: 2,
+  Epic: 3,
+  Legendary: 4,
+  Chroma: 5,
+  Mystic: 6,
 };
 
 export const CIRCUS_BLOOKS: BlookItem[] = [
@@ -166,17 +178,144 @@ export const CIRCUS_BLOOKS: BlookItem[] = [
   },
 ];
 
+export const ATHLETES_BLOOKS: BlookItem[] = [
+  {
+    id: 'athlete-football',
+    name: 'Football Player',
+    rarity: 'Uncommon',
+    chance: 15,
+    chanceLabel: '15%',
+    sellPrice: 5,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__8__1fd2ddf0.png',
+  },
+  {
+    id: 'athlete-baseball',
+    name: 'Baseball Player',
+    rarity: 'Uncommon',
+    chance: 15,
+    chanceLabel: '15%',
+    sellPrice: 5,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__9__503c7292.png',
+  },
+  {
+    id: 'athlete-racer',
+    name: 'Race Car Driver',
+    rarity: 'Uncommon',
+    chance: 15,
+    chanceLabel: '15%',
+    sellPrice: 5,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__10__a82bd15a.png',
+  },
+  {
+    id: 'athlete-referee',
+    name: 'Referee',
+    rarity: 'Uncommon',
+    chance: 15,
+    chanceLabel: '15%',
+    sellPrice: 5,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__11__98e22493.png',
+  },
+  {
+    id: 'athlete-basketball',
+    name: 'Basketball Player',
+    rarity: 'Uncommon',
+    chance: 15,
+    chanceLabel: '15%',
+    sellPrice: 5,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__12__145c93f6.png',
+  },
+  {
+    id: 'athlete-runner',
+    name: 'Track Runner',
+    rarity: 'Rare',
+    chance: 7,
+    chanceLabel: '7%',
+    sellPrice: 20,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__13__9bca1b6b.png',
+  },
+  {
+    id: 'athlete-martial-artist',
+    name: 'Martial Artist',
+    rarity: 'Rare',
+    chance: 7,
+    chanceLabel: '7%',
+    sellPrice: 20,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__14__24143c42.png',
+  },
+  {
+    id: 'athlete-fencer',
+    name: 'Fencer',
+    rarity: 'Rare',
+    chance: 7,
+    chanceLabel: '7%',
+    sellPrice: 20,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__15__d4d9b8c1.png',
+  },
+  {
+    id: 'athlete-golfer',
+    name: 'Golfer',
+    rarity: 'Epic',
+    chance: 3.57,
+    chanceLabel: '3.57%',
+    sellPrice: 75,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__16__518d3dbc.png',
+  },
+  {
+    id: 'athlete-soccer',
+    name: 'Soccer Player',
+    rarity: 'Legendary',
+    chance: 0.4,
+    chanceLabel: '0.4%',
+    sellPrice: 200,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__17__e8d8a365.png',
+  },
+  {
+    id: 'athlete-cyborg',
+    name: 'Cyborg Coach',
+    rarity: 'Chroma',
+    chance: 0.03,
+    chanceLabel: '0.03%',
+    sellPrice: 350,
+    packId: 'athletes',
+    imageUrl: '/assets/aistudio/download__18__e086e375.png',
+  },
+];
+
+export const ALL_BLOOKS: BlookItem[] = [...CIRCUS_BLOOKS, ...ATHLETES_BLOOKS];
+
 export const CIRCUS_PACK: PackInfo = {
   id: 'circus',
   name: 'Circus Pack',
   price: 20,
-  bgColor: '#7b1113',
-  borderColor: '#a31b1e',
+  bgColor: '#ff4242',
+  borderColor: '#b91c1c',
+  revealBgColor: '#fca5a5',
+  coverImageUrl: '/assets/aistudio/Pack_Designs__4_-removebg-preview_40ec04e2.png',
   blooks: CIRCUS_BLOOKS,
 };
 
-// ONLY CIRCUS PACK!
-export const MARKET_PACKS: PackInfo[] = [CIRCUS_PACK];
+export const ATHLETES_PACK: PackInfo = {
+  id: 'athletes',
+  name: 'Athletes Pack',
+  price: 20,
+  bgColor: '#4ade80',
+  borderColor: '#16a34a',
+  revealBgColor: '#86efac',
+  coverImageUrl: '/assets/aistudio/Pack_Designs__2_-removebg-preview_c4530e10.png',
+  blooks: ATHLETES_BLOOKS,
+};
+
+export const MARKET_PACKS: PackInfo[] = [CIRCUS_PACK, ATHLETES_PACK];
 
 export function rollBlookFromPack(pack: PackInfo, luckMultiplier: number = 1): BlookItem {
   const items = pack.blooks;
@@ -198,3 +337,108 @@ export function rollBlookFromPack(pack: PackInfo, luckMultiplier: number = 1): B
   }
   return items[0];
 }
+
+export interface BazaarIngredient {
+  blookId: string;
+  count: number;
+}
+
+export interface BazaarRecipe {
+  id: string;
+  targetBlookId: string;
+  ingredients: BazaarIngredient[];
+}
+
+export const BAZAAR_RECIPES: BazaarRecipe[] = [
+  {
+    id: 'craft-cotton-candy',
+    targetBlookId: 'cotton-candy',
+    ingredients: [
+      { blookId: 'tightrope-walker', count: 5 },
+      { blookId: 'jester', count: 1 },
+      { blookId: 'magician', count: 2 },
+    ],
+  },
+  {
+    id: 'craft-unicycler',
+    targetBlookId: 'unicycler',
+    ingredients: [
+      { blookId: 'jester', count: 3 },
+      { blookId: 'popcorn', count: 3 },
+      { blookId: 'top-hat', count: 2 },
+    ],
+  },
+  {
+    id: 'craft-canon-ball',
+    targetBlookId: 'canon-ball',
+    ingredients: [
+      { blookId: 'top-hat', count: 4 },
+      { blookId: 'popcorn', count: 2 },
+      { blookId: 'tightrope-walker', count: 2 },
+    ],
+  },
+  {
+    id: 'craft-magic-wand',
+    targetBlookId: 'magic-wand',
+    ingredients: [
+      { blookId: 'cotton-candy', count: 2 },
+      { blookId: 'unicycler', count: 2 },
+      { blookId: 'magician', count: 3 },
+    ],
+  },
+  {
+    id: 'craft-tent',
+    targetBlookId: 'tent',
+    ingredients: [
+      { blookId: 'canon-ball', count: 2 },
+      { blookId: 'cotton-candy', count: 2 },
+      { blookId: 'top-hat', count: 3 },
+    ],
+  },
+  {
+    id: 'craft-circus-ball',
+    targetBlookId: 'circus-ball',
+    ingredients: [
+      { blookId: 'magic-wand', count: 3 },
+      { blookId: 'tent', count: 3 },
+    ],
+  },
+  {
+    id: 'craft-circus-elephant',
+    targetBlookId: 'circus-elephant',
+    ingredients: [
+      { blookId: 'circus-ball', count: 2 },
+      { blookId: 'magic-wand', count: 2 },
+      { blookId: 'tent', count: 2 },
+    ],
+  },
+  {
+    id: 'craft-ring-lion',
+    targetBlookId: 'ring-lion',
+    ingredients: [
+      { blookId: 'circus-ball', count: 2 },
+      { blookId: 'circus-elephant', count: 1 },
+      { blookId: 'canon-ball', count: 3 },
+    ],
+  },
+  {
+    id: 'craft-fire-guy',
+    targetBlookId: 'fire-guy',
+    ingredients: [
+      { blookId: 'circus-ball', count: 2 },
+      { blookId: 'magic-wand', count: 3 },
+      { blookId: 'popcorn', count: 3 },
+    ],
+  },
+  {
+    id: 'craft-the-golden-ticket',
+    targetBlookId: 'the-golden-ticket',
+    ingredients: [
+      { blookId: 'circus-elephant', count: 1 },
+      { blookId: 'ring-lion', count: 1 },
+      { blookId: 'fire-guy', count: 1 },
+      { blookId: 'circus-ball', count: 2 },
+    ],
+  },
+];
+

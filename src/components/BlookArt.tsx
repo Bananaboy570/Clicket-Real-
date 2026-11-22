@@ -1,4 +1,5 @@
 import React from 'react';
+import { ALL_BLOOKS } from '../data/blooks';
 
 interface BlookArtProps {
   id: string;
@@ -36,9 +37,21 @@ export const BlooketTokenIcon: React.FC<{ className?: string }> = ({ className =
 );
 
 /**
- * Exact Blook artwork from 1.png and 2.png
+ * Exact Blook artwork from uploaded PNGs and Circus Pack SVGs
  */
 export const BlookArt: React.FC<BlookArtProps> = ({ id, className = 'w-24 h-24' }) => {
+  const imageBlook = ALL_BLOOKS.find((b) => b.id === id && b.imageUrl);
+  if (imageBlook?.imageUrl) {
+    return (
+      <img
+        src={imageBlook.imageUrl}
+        alt={imageBlook.name}
+        className={`${className} object-contain select-none`}
+        draggable={false}
+      />
+    );
+  }
+
   switch (id) {
     case 'tightrope-walker':
       return (

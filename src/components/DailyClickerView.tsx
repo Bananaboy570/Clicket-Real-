@@ -34,14 +34,17 @@ interface DailyClickerViewProps {
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 const WHEEL_SEGMENTS = [
-  { amount: 15, color: '#3b82f6', text: '#ffffff' },
-  { amount: 50, color: '#933da8', text: '#ffffff' },
-  { amount: 25, color: '#00c2cb', text: '#ffffff' },
-  { amount: 150, color: '#f59e0b', text: '#451a03' },
-  { amount: 35, color: '#10b981', text: '#ffffff' },
-  { amount: 100, color: '#ec4899', text: '#ffffff' },
-  { amount: 75, color: '#6366f1', text: '#ffffff' },
-  { amount: 500, color: '#fbbf24', text: '#451a03' },
+  { amount: 1000, label: '+1.0k', color: '#dc2626', text: '#ffffff' },
+  { amount: 1100, label: '+1.1k', color: '#fbbf24', text: '#451a03' },
+  { amount: 1200, label: '+1.2k', color: '#10b981', text: '#ffffff' },
+  { amount: 1300, label: '+1.3k', color: '#f87171', text: '#ffffff' },
+  { amount: 1400, label: '+1.4k', color: '#3b82f6', text: '#ffffff' },
+  { amount: 1500, label: '+1.5k', color: '#f59e0b', text: '#451a03' },
+  { amount: 1600, label: '+1.6k', color: '#ec4899', text: '#ffffff' },
+  { amount: 1700, label: '+1.7k', color: '#14b8a6', text: '#ffffff' },
+  { amount: 1800, label: '+1.8k', color: '#ef4444', text: '#ffffff' },
+  { amount: 1900, label: '+1.9k', color: '#6366f1', text: '#ffffff' },
+  { amount: 2000, label: '+2.0k', color: '#fde047', text: '#451a03' },
 ];
 
 function formatRemaining(ms: number): string {
@@ -181,8 +184,8 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
   const handleSpinWheel = () => {
     if (isWheelLocked || isSpinning) return;
 
-    // Weighted pick favoring mid rewards, keeping 500 exciting
-    const weights = [20, 18, 20, 8, 16, 10, 6, 2];
+    // Weighted pick across the 11 +1.0k to +2.0k rewards
+    const weights = [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 5];
     const total = weights.reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
     let winningIdx = 0;
@@ -223,7 +226,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
   const progressPercent = Math.max(0, Math.min(100, (timeLeft / ROUND_DURATION) * 100));
 
   return (
-    <div className="relative z-10 px-9 pt-6 pb-16 pr-44 min-h-full flex flex-col">
+    <div className="relative z-10 px-9 pt-6 pb-16 min-h-full flex flex-col">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div>
@@ -250,7 +253,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
           onClick={() => setSubTab('CLICKER')}
           className={`px-5 py-2 rounded-xl font-titan text-base flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             subTab === 'CLICKER'
-              ? 'bg-white text-[#933da8] shadow-sm'
+              ? 'bg-white text-[#dc2626] shadow-sm'
               : 'text-white hover:bg-white/10'
           }`}
         >
@@ -262,7 +265,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
           onClick={() => setSubTab('WHEEL')}
           className={`px-5 py-2 rounded-xl font-titan text-base flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             subTab === 'WHEEL'
-              ? 'bg-white text-[#933da8] shadow-sm'
+              ? 'bg-white text-[#dc2626] shadow-sm'
               : 'text-white hover:bg-white/10'
           }`}
         >
@@ -284,8 +287,8 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
             <>
               {/* Timer & Live Stats Row */}
               <div className="w-full grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 text-xs font-nunito font-black text-[#933da8]">
+                <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 text-xs font-nunito font-black text-[#dc2626]">
                     <Timer className="w-3.5 h-3.5" />
                     <span>TIME LEFT</span>
                   </div>
@@ -294,8 +297,8 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
                   </p>
                 </div>
 
-                <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 text-xs font-nunito font-black text-[#0a5cf5]">
+                <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 text-xs font-nunito font-black text-[#e11d48]">
                     <MousePointerClick className="w-3.5 h-3.5" />
                     <span>CLICKS ({currentCps}/s)</span>
                   </div>
@@ -321,7 +324,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
                   className="h-full transition-all duration-75 rounded-full"
                   style={{
                     width: `${progressPercent}%`,
-                    backgroundColor: timeLeft <= 5 && phase === 'ACTIVE' ? '#ef4444' : '#00c2cb',
+                    backgroundColor: timeLeft <= 5 && phase === 'ACTIVE' ? '#b91c1c' : '#f87171',
                   }}
                 />
               </div>
@@ -329,7 +332,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
               {/* 24-Hour Lock State vs Active/Ready Target */}
               {isDailyLocked ? (
                 <div className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-7 text-center my-2">
-                  <div className="w-16 h-16 rounded-2xl bg-purple-100 text-[#933da8] flex items-center justify-center mx-auto mb-3">
+                  <div className="w-16 h-16 rounded-2xl bg-red-100 text-[#dc2626] flex items-center justify-center mx-auto mb-3">
                     <Lock className="w-8 h-8" />
                   </div>
                   <h2 className="font-titan text-3xl text-slate-800 mb-1">
@@ -338,8 +341,8 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
                   <p className="font-nunito font-bold text-slate-600 text-sm mb-4">
                     You already completed today&apos;s 30-second sprint! You can still buy Click Upgrades on the right or spin the Daily Wheel.
                   </p>
-                  <div className="inline-flex flex-col items-center bg-white border-2 border-purple-200 px-6 py-3 rounded-2xl mb-4">
-                    <span className="font-nunito font-black text-xs text-[#933da8]">
+                  <div className="inline-flex flex-col items-center bg-white border-2 border-red-200 px-6 py-3 rounded-2xl mb-4">
+                    <span className="font-nunito font-black text-xs text-[#dc2626]">
                       NEXT SPRINT UNLOCKS IN
                     </span>
                     <span className="font-titan text-3xl text-slate-900 tabular-nums mt-0.5">
@@ -357,12 +360,16 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
                   <button
                     type="button"
                     onClick={handleTargetClick}
-                    className={`relative w-56 h-56 rounded-full bg-gradient-to-b from-[#00c2cb] to-[#0099a1] border-8 border-white shadow-[0_12px_0_#00777d,0_20px_35px_rgba(0,0,0,0.2)] flex flex-col items-center justify-center cursor-pointer transition-transform select-none ${
-                      isPressed ? 'scale-95 translate-y-1.5 shadow-[0_6px_0_#00777d]' : 'hover:scale-[1.03]'
+                    className={`relative w-56 h-56 rounded-full bg-gradient-to-b from-[#f87171] to-[#ef4444] border-8 border-white shadow-[0_12px_0_#b91c1c,0_20px_35px_rgba(0,0,0,0.2)] flex flex-col items-center justify-center cursor-pointer transition-transform select-none ${
+                      isPressed ? 'scale-95 translate-y-1.5 shadow-[0_6px_0_#b91c1c]' : 'hover:scale-[1.03]'
                     }`}
                   >
-                    <div className="w-28 h-28 pointer-events-none drop-shadow-md">
-                      <BlookArt id={equippedBlookId} className="w-full h-full" />
+                    <div className="w-28 h-28 pointer-events-none drop-shadow-md flex items-center justify-center">
+                      {equippedBlookId ? (
+                        <BlookArt id={equippedBlookId} className="w-full h-full" />
+                      ) : (
+                        <BlooketTokenIcon className="w-24 h-24" />
+                      )}
                     </div>
                     <span className="mt-2 font-titan text-white text-xl tracking-wide drop-shadow-[0_2px_0_rgba(0,0,0,0.3)] pointer-events-none">
                       {phase === 'READY' ? 'CLICK TO START!' : `+${tokensPerClick} / CLICK`}
@@ -395,14 +402,14 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
             /* DAILY TOKEN WHEEL */
             <div className="w-full flex flex-col items-center py-2">
               <div className="text-center mb-4">
-                <h2 className="font-titan text-3xl text-[#933da8]">Daily Token Wheel</h2>
+                <h2 className="font-titan text-3xl text-[#dc2626]">Daily Token Wheel</h2>
                 <p className="font-nunito font-bold text-xs text-slate-500 mt-1">
-                  Spin once every 24 hours for free Clicket Tokens (15 to 500 Tokens)!
+                  Spin once every 24 hours for free Clicket Tokens (+1.0k to +2.0k Tokens)!
                 </p>
               </div>
 
               {/* Wheel Container */}
-              <div className="relative w-72 h-72 flex items-center justify-center mb-5">
+              <div className="relative w-80 h-80 flex items-center justify-center mb-5">
                 {/* Top Pointer Triangle */}
                 <div
                   className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-0 h-0"
@@ -416,7 +423,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
 
                 {/* Rotating SVG Wheel */}
                 <div
-                  className="w-full h-full rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.2)] border-8 border-[#933da8]"
+                  className="w-full h-full rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.2)] border-8 border-[#dc2626]"
                   style={{
                     transform: `rotate(${wheelRotation}deg)`,
                     transition: isSpinning
@@ -424,42 +431,59 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
                       : 'none',
                   }}
                 >
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                  <svg viewBox="0 0 260 260" className="w-full h-full">
                     {WHEEL_SEGMENTS.map((seg, i) => {
                       const sliceDeg = 360 / WHEEL_SEGMENTS.length;
                       const startAngle = (i * sliceDeg - 90) * (Math.PI / 180);
                       const endAngle = ((i + 1) * sliceDeg - 90) * (Math.PI / 180);
-                      const x1 = 100 + 100 * Math.cos(startAngle);
-                      const y1 = 100 + 100 * Math.sin(startAngle);
-                      const x2 = 100 + 100 * Math.cos(endAngle);
-                      const y2 = 100 + 100 * Math.sin(endAngle);
+                      const x1 = 130 + 130 * Math.cos(startAngle);
+                      const y1 = 130 + 130 * Math.sin(startAngle);
+                      const x2 = 130 + 130 * Math.cos(endAngle);
+                      const y2 = 130 + 130 * Math.sin(endAngle);
                       const midDeg = i * sliceDeg + sliceDeg / 2;
 
                       return (
                         <g key={i}>
                           <path
-                            d={`M 100 100 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`}
+                            d={`M 130 130 L ${x1} ${y1} A 130 130 0 0 1 ${x2} ${y2} Z`}
                             fill={seg.color}
                             stroke="#ffffff"
                             strokeWidth="2"
                           />
-                          <g transform={`rotate(${midDeg} 100 100)`}>
+                          <g transform={`rotate(${midDeg - 90} 130 130)`}>
+                            {/* Label + Token Icon side-by-side along the slice */}
                             <text
-                              x="100"
-                              y="36"
-                              textAnchor="middle"
+                              x="216"
+                              y="135"
+                              textAnchor="end"
                               fill={seg.text}
-                              fontSize="16"
+                              fontSize="14.5"
                               fontWeight="900"
-                              fontFamily="Titan One, sans-serif"
+                              fontFamily="Nunito, sans-serif"
                             >
-                              {seg.amount}
+                              {seg.label}
                             </text>
+                            <g transform="translate(220, 121.5) scale(0.42) rotate(-12 20 20)">
+                              <rect x="8" y="6" width="25" height="30" rx="5" fill="#b45309" />
+                              <rect x="6" y="4" width="25" height="30" rx="5" fill="#fbbf24" stroke="#d97706" strokeWidth="1.8" />
+                              <rect x="9.5" y="7.5" width="18" height="23" rx="3" fill="#f59e0b" stroke="#fde68a" strokeWidth="1.4" />
+                              <text
+                                x="18.5"
+                                y="24.5"
+                                textAnchor="middle"
+                                fill="#fef3c7"
+                                fontFamily="'Titan One', cursive, sans-serif"
+                                fontSize="16"
+                                fontWeight="bold"
+                              >
+                                B
+                              </text>
+                            </g>
                           </g>
                         </g>
                       );
                     })}
-                    <circle cx="100" cy="100" r="20" fill="#ffffff" stroke="#933da8" strokeWidth="5" />
+                    <circle cx="130" cy="130" r="24" fill="#ffffff" stroke="#dc2626" strokeWidth="5" />
                   </svg>
                 </div>
               </div>
@@ -467,8 +491,9 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
               {wheelPrize !== null && !isSpinning && (
                 <div className="mb-4 px-5 py-2.5 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center gap-2 animate-pop-reveal">
                   <Sparkles className="w-5 h-5 text-amber-700" />
+                  <BlooketTokenIcon className="w-5 h-5" />
                   <span className="font-titan text-xl text-amber-800">
-                    You won +{wheelPrize} Tokens!
+                    You won +{wheelPrize.toLocaleString()} Tokens!
                   </span>
                 </div>
               )}
@@ -499,7 +524,7 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
         {/* RIGHT COLUMN: CLICK UPGRADES (ALWAYS UNLOCKED EVEN DURING 24H COOLDOWN!) */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-6 shadow-[0_8px_0_rgba(0,0,0,0.18)] flex flex-col gap-5">
           <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-4">
-            <div className="w-11 h-11 rounded-2xl bg-purple-100 text-[#933da8] flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-red-100 text-[#dc2626] flex items-center justify-center shrink-0">
               <ArrowUpCircle className="w-6 h-6" />
             </div>
             <div>
@@ -512,9 +537,9 @@ export const DailyClickerView: React.FC<DailyClickerViewProps> = ({
             </div>
           </div>
 
-          <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 flex items-center justify-between">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-center justify-between">
             <div>
-              <span className="font-nunito font-black text-xs text-[#933da8] uppercase">
+              <span className="font-nunito font-black text-xs text-[#dc2626] uppercase">
                 Current Power (Lv. {clickUpgradeLevel})
               </span>
               <p className="font-titan text-3xl text-slate-900 mt-0.5 tabular-nums">

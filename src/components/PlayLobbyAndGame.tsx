@@ -16,7 +16,7 @@ import {
   Coins,
   Play,
 } from 'lucide-react';
-import { CIRCUS_BLOOKS, RARITY_COLORS } from '../data/blooks';
+import { ALL_BLOOKS, RARITY_COLORS } from '../data/blooks';
 import { BlookArt, BlooketTokenIcon } from './BlookArt';
 import { GameModeLogo, MultiplayerGameMode } from './GameModeLogo';
 import { PlayTriviaView, TriviaQuestion } from './PlayTriviaView';
@@ -116,7 +116,7 @@ const MODE_DETAILS: Record<
     rules:
       'Correct answers spin a mini Curse Slot Reel awarding Scrambled Keys (shuffles buttons 15s), Tax Collector (siphons 20% of their next 3 payouts), or Fog Screen (smoke they must wipe away).',
     winCondition: 'Highest score when the timer ends.',
-    accent: '#933da8',
+    accent: '#dc2626',
   },
   bounty_board: {
     name: 'Bounty Board',
@@ -405,10 +405,10 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
             {/* Join with 7-Digit Code */}
             <div className="bg-white rounded-3xl p-7 shadow-[0_10px_0_rgba(0,0,0,0.18)] flex flex-col justify-between text-slate-800">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-sky-100 text-[#18a4e0] flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 text-[#f87171] flex items-center justify-center mb-4">
                   <Users className="w-6 h-6" />
                 </div>
-                <h2 className="font-titan text-3xl text-[#18a4e0] mb-2">
+                <h2 className="font-titan text-3xl text-[#f87171] mb-2">
                   Join Live Game
                 </h2>
                 <p className="font-nunito font-bold text-slate-600 text-sm mb-5">
@@ -425,11 +425,11 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                       setJoinCodeInput(e.target.value.replace(/\D/g, '').slice(0, 7))
                     }
                     placeholder="7-Digit Code (e.g. 4829103)"
-                    className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-200 font-titan text-2xl tracking-[0.2em] text-center text-slate-900 focus:outline-none focus:border-[#18a4e0]"
+                    className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-200 font-titan text-2xl tracking-[0.2em] text-center text-slate-900 focus:outline-none focus:border-[#f87171]"
                   />
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-2xl bg-[#00c2cb] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_6px_0_#008b94] text-white font-titan text-xl cursor-pointer transition-all"
+                    className="w-full py-3.5 rounded-2xl bg-[#f87171] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_6px_0_#dc2626] text-white font-titan text-xl cursor-pointer transition-all"
                   >
                     Join With 7-Digit Code
                   </button>
@@ -440,10 +440,10 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
             {/* Host a Game (Choose 1 of 3 Modes) */}
             <div className="bg-white rounded-3xl p-7 shadow-[0_10px_0_rgba(0,0,0,0.18)] flex flex-col justify-between text-slate-800">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-purple-100 text-[#933da8] flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 text-[#dc2626] flex items-center justify-center mb-4">
                   <Radio className="w-6 h-6" />
                 </div>
-                <h2 className="font-titan text-3xl text-[#933da8] mb-2">
+                <h2 className="font-titan text-3xl text-[#dc2626] mb-2">
                   Host a Live Lobby
                 </h2>
                 <p className="font-nunito font-bold text-slate-600 text-sm mb-5">
@@ -458,7 +458,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
               <button
                 type="button"
                 onClick={() => setView('HOST_MODE')}
-                className="w-full py-3.5 rounded-2xl bg-[#933da8] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_6px_0_#6b277d] text-white font-titan text-xl cursor-pointer transition-all"
+                className="w-full py-3.5 rounded-2xl bg-[#dc2626] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_6px_0_#991b1b] text-white font-titan text-xl cursor-pointer transition-all"
               >
                 Choose Game Mode & Host
               </button>
@@ -601,7 +601,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
             <button
               type="button"
               onClick={handleCreateHostRoom}
-              className="px-8 py-3.5 rounded-2xl bg-[#00c2cb] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_6px_0_#008b94] text-white font-titan text-xl cursor-pointer whitespace-nowrap shrink-0"
+              className="px-8 py-3.5 rounded-2xl bg-[#f87171] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_6px_0_#dc2626] text-white font-titan text-xl cursor-pointer whitespace-nowrap shrink-0"
             >
               Host {MODE_DETAILS[selectedHostMode].name}
             </button>
@@ -633,9 +633,9 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
 
             {/* 7-Digit Join Code Pill */}
             <div className="flex items-center gap-3">
-              <div className="bg-purple-50 border-2 border-[#933da8]/30 rounded-2xl px-4 py-2 flex items-center gap-3">
+              <div className="bg-red-50 border-2 border-[#dc2626]/30 rounded-2xl px-4 py-2 flex items-center gap-3">
                 <div>
-                  <span className="block font-nunito font-black text-[10px] text-[#933da8]">
+                  <span className="block font-nunito font-black text-[10px] text-[#dc2626]">
                     7-DIGIT GAME CODE
                   </span>
                   <span className="font-titan text-3xl tracking-[0.16em] text-slate-900 tabular-nums">
@@ -649,7 +649,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                     setCopiedCode(true);
                     setTimeout(() => setCopiedCode(false), 1800);
                   }}
-                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#933da8] cursor-pointer"
+                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#dc2626] cursor-pointer"
                   title="Copy 7-digit code"
                 >
                   {copiedCode ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -689,7 +689,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                   <>
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                       <div>
-                        <h3 className="font-titan text-2xl text-[#933da8]">
+                        <h3 className="font-titan text-2xl text-[#dc2626]">
                           Pick Your Unique Blook
                         </h3>
                         <p className="font-nunito font-bold text-xs text-slate-500">
@@ -704,7 +704,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                     </div>
 
                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                      {CIRCUS_BLOOKS.map((blook) => {
+                      {ALL_BLOOKS.map((blook) => {
                         const claimer = room.claimedBlooks[blook.id];
                         const isMine = claimer?.playerId === myPlayer.playerId;
                         const takenByOther = Boolean(claimer && !isMine);
@@ -719,10 +719,10 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                             }
                             className={`relative rounded-2xl p-2.5 flex flex-col items-center text-center border-2 transition-all ${
                               isMine
-                                ? 'bg-purple-50 border-[#933da8] scale-105 shadow-md cursor-pointer'
+                                ? 'bg-red-50 border-[#dc2626] scale-105 shadow-md cursor-pointer'
                                 : takenByOther
                                 ? 'bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed'
-                                : 'bg-slate-50 border-slate-200 hover:border-[#18a4e0] hover:bg-sky-50 cursor-pointer'
+                                : 'bg-slate-50 border-slate-200 hover:border-[#f87171] hover:bg-red-50 cursor-pointer'
                             }`}
                           >
                             <div className="w-14 h-14 mb-1.5">
@@ -755,7 +755,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                 ) : (
                   /* Host Screen waiting for players to enter 7-digit code */
                   <div className="text-center py-6">
-                    <p className="font-nunito font-black text-sm text-[#933da8] mb-2">
+                    <p className="font-nunito font-black text-sm text-[#dc2626] mb-2">
                       DISPLAY THIS 7-DIGIT CODE ON YOUR SCREEN
                     </p>
                     <div className="inline-block bg-slate-900 text-white font-titan text-5xl sm:text-6xl tracking-[0.2em] px-8 py-5 rounded-3xl shadow-xl mb-5 tabular-nums">
@@ -769,7 +769,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                       <button
                         type="button"
                         onClick={handleHostAlsoPlay}
-                        className="px-5 py-2.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-[#933da8] font-nunito font-black text-sm cursor-pointer"
+                        className="px-5 py-2.5 rounded-xl bg-red-100 hover:bg-red-200 text-[#dc2626] font-nunito font-black text-sm cursor-pointer"
                       >
                         Also Join as Player in This Tab
                       </button>
@@ -811,7 +811,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                             </p>
                             <p className="font-nunito font-bold text-[11px] text-slate-400">
                               {p.blookId
-                                ? CIRCUS_BLOOKS.find((b) => b.id === p.blookId)?.name
+                                ? ALL_BLOOKS.find((b) => b.id === p.blookId)?.name
                                 : 'Picking Blook...'}
                             </p>
                           </div>
@@ -826,7 +826,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                   <button
                     type="button"
                     onClick={() => sendWs({ type: 'host:start' })}
-                    className="w-full py-3.5 rounded-2xl bg-[#00c2cb] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_5px_0_#008b94] text-white font-titan text-xl flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 rounded-2xl bg-[#f87171] hover:brightness-105 active:translate-y-0.5 active:shadow-none shadow-[0_5px_0_#dc2626] text-white font-titan text-xl flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Play className="w-5 h-5 fill-white" />
                     <span>Start {MODE_DETAILS[room.mode].name}</span>
@@ -885,7 +885,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                     {/* Player HUD Strip */}
                     <div className="bg-white rounded-2xl p-4 shadow-[0_6px_0_rgba(0,0,0,0.16)] flex flex-wrap items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-purple-50 p-1">
+                        <div className="w-12 h-12 rounded-xl bg-red-50 p-1">
                           <BlookArt
                             id={myPlayer.blookId || 'jester'}
                             className="w-full h-full"
@@ -903,13 +903,13 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
 
                       {room.mode === 'vault_heist' && (
                         <div className="flex-1 max-w-xs">
-                          <div className="flex items-center justify-between text-xs font-nunito font-black text-blue-700 mb-1">
+                          <div className="flex items-center justify-between text-xs font-nunito font-black text-[#dc2626] mb-1">
                             <span>DRILL ENERGY</span>
                             <span>{myPlayer.drillEnergy}%</span>
                           </div>
                           <div className="h-3.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                             <div
-                              className="h-full bg-[#00c2cb] transition-all"
+                              className="h-full bg-[#f87171] transition-all"
                               style={{ width: `${myPlayer.drillEnergy}%` }}
                             />
                           </div>
@@ -937,8 +937,8 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
 
                     {/* MODE 1 SPECIAL MODAL: VAULT HEIST — PICK FROM 3 VAULTS */}
                     {room.mode === 'vault_heist' && myPlayer.heistPending && (
-                      <div className="bg-slate-900 text-white rounded-3xl p-6 border-4 border-[#38bdf8] shadow-2xl">
-                        <h3 className="font-titan text-3xl text-[#38bdf8] mb-1">
+                      <div className="bg-slate-900 text-white rounded-3xl p-6 border-4 border-[#f87171] shadow-2xl">
+                        <h3 className="font-titan text-3xl text-[#fca5a5] mb-1">
                           Drill Energy Full — Pick a Vault!
                         </h3>
                         <p className="font-nunito font-bold text-slate-300 text-sm mb-5">
@@ -1028,7 +1028,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                                 });
                                 setSelectedVaultTarget(null);
                               }}
-                              className="py-3 px-4 rounded-xl bg-[#00c2cb] text-white font-titan text-base cursor-pointer hover:brightness-105"
+                              className="py-3 px-4 rounded-xl bg-[#f87171] text-white font-titan text-base cursor-pointer hover:brightness-105"
                             >
                               Quiet Pick (Steal 15% Safely)
                             </button>
@@ -1053,7 +1053,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
 
                     {/* MODE 2 SPECIAL MODAL: CURSE ROULETTE SLOT REEL & TARGET */}
                     {room.mode === 'curse_roulette' && myPlayer.pendingCurse && (
-                      <div className="bg-purple-950 text-white rounded-3xl p-6 border-4 border-amber-400 shadow-2xl">
+                      <div className="bg-red-950 text-white rounded-3xl p-6 border-4 border-amber-400 shadow-2xl">
                         <div className="flex items-center gap-3 mb-3">
                           <Skull className="w-7 h-7 text-amber-300" />
                           <h3 className="font-titan text-2xl text-amber-300">
@@ -1061,7 +1061,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                           </h3>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3 bg-slate-900 p-4 rounded-2xl border-2 border-purple-500 mb-4 text-center">
+                        <div className="grid grid-cols-3 gap-3 bg-slate-900 p-4 rounded-2xl border-2 border-red-500 mb-4 text-center">
                           {[0, 1, 2].map((reel) => (
                             <div
                               key={reel}
@@ -1082,7 +1082,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
 
                         {!slotSpinning && (
                           <div>
-                            <p className="font-nunito font-bold text-xs text-purple-200 mb-3">
+                            <p className="font-nunito font-bold text-xs text-red-200 mb-3">
                               {revealedCurse === 'scrambled_keys'
                                 ? 'Scrambled Keys: Shuffles a rival’s A/B/C/D buttons for 15 seconds!'
                                 : revealedCurse === 'tax_collector'
@@ -1240,14 +1240,14 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                   /* Host Live View */
                   <div className="bg-white rounded-3xl p-6 shadow-[0_8px_0_rgba(0,0,0,0.16)]">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-titan text-2xl text-[#933da8]">
+                      <h3 className="font-titan text-2xl text-[#dc2626]">
                         Host Live Control — {MODE_DETAILS[room.mode].name}
                       </h3>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={handleHostAlsoPlay}
-                          className="px-4 py-2 rounded-xl bg-purple-100 text-[#933da8] font-nunito font-black text-xs cursor-pointer"
+                          className="px-4 py-2 rounded-xl bg-red-100 text-[#dc2626] font-nunito font-black text-xs cursor-pointer"
                         >
                           Jump In & Play
                         </button>
@@ -1280,7 +1280,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                         key={p.playerId}
                         className={`flex items-center justify-between p-2.5 rounded-xl border ${
                           p.playerId === clientId
-                            ? 'bg-purple-50 border-[#933da8]/40'
+                            ? 'bg-red-50 border-[#dc2626]/40'
                             : 'bg-slate-50 border-slate-200'
                         }`}
                       >
@@ -1308,7 +1308,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
 
                 <div className="bg-white rounded-3xl p-5 shadow-[0_8px_0_rgba(0,0,0,0.16)]">
                   <h3 className="font-titan text-lg text-slate-800 mb-3 flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-[#933da8]" />
+                    <Zap className="w-4 h-4 text-[#dc2626]" />
                     <span>Live Feed</span>
                   </h3>
                   <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
@@ -1319,9 +1319,9 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
                           ev.tone === 'alarm'
                             ? 'bg-rose-50 text-rose-700'
                             : ev.tone === 'steal'
-                            ? 'bg-sky-50 text-sky-800'
+                            ? 'bg-red-50 text-red-700'
                             : ev.tone === 'curse'
-                            ? 'bg-purple-50 text-purple-800'
+                            ? 'bg-red-100 text-red-900'
                             : ev.tone === 'bounty'
                             ? 'bg-amber-50 text-amber-900'
                             : 'bg-slate-50 text-slate-600'
@@ -1340,7 +1340,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
           {room.status === 'FINISHED' && (
             <div className="bg-white rounded-3xl p-8 shadow-[0_10px_0_rgba(0,0,0,0.18)] max-w-2xl mx-auto w-full text-center">
               <GameModeLogo mode={room.mode} className="w-24 h-24 mx-auto mb-3" />
-              <h2 className="font-titan text-4xl text-[#933da8] mb-2">
+              <h2 className="font-titan text-4xl text-[#dc2626] mb-2">
                 Match Complete!
               </h2>
               <p className="font-nunito font-bold text-slate-600 text-sm mb-6">
@@ -1385,7 +1385,7 @@ export const PlayLobbyAndGame: React.FC<PlayLobbyAndGameProps> = ({
               <button
                 type="button"
                 onClick={handleLeaveRoom}
-                className="px-8 py-3.5 rounded-2xl bg-[#00c2cb] text-white font-titan text-xl shadow-[0_5px_0_#008b94] cursor-pointer"
+                className="px-8 py-3.5 rounded-2xl bg-[#f87171] text-white font-titan text-xl shadow-[0_5px_0_#dc2626] cursor-pointer"
               >
                 Back to Play Menu
               </button>

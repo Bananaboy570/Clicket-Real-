@@ -69,9 +69,56 @@ interface ClientMeta {
   userId?: string;
 }
 
+export interface OnlineClient {
+  clientId: string;
+  ws: WebSocket;
+  userId: string;
+  username: string;
+  avatarBlookId: string;
+  unlockedCount: number;
+  inventory: Record<string, number>;
+  activeTradeId: string | null;
+}
+
+export interface TradeSession {
+  tradeId: string;
+  initiatorClientId: string;
+  targetClientId: string;
+  status: 'PENDING' | 'NEGOTIATING' | 'COMPLETED' | 'CANCELLED';
+  offerByClient: Record<string, string | null>;
+  acceptedByClient: Record<string, boolean>;
+}
+
 export interface MultiplayerDeps {
   onRecordSetPlay: (setId: string, userId?: string) => Promise<void>;
   onAwardTokens: (userId: string, amount: number) => Promise<void>;
+  onExecuteBlookTrade: (
+    userIdA: string,
+    blookIdA: string,
+    userIdB: string,
+    blookIdB: string
+  ) => Promise<{
+    ok: boolean;
+    error?: string;
+    inventoryA?: Record<string, number>;
+    equippedA?: string;
+    historyEntryA?: {
+      id: string;
+      timestamp: string;
+      partnerUsername: string;
+      gaveBlookId: string;
+      receivedBlookId: string;
+    };
+    inventoryB?: Record<string, number>;
+    equippedB?: string;
+    historyEntryB?: {
+      id: string;
+      timestamp: string;
+      partnerUsername: string;
+      gaveBlookId: string;
+      receivedBlookId: string;
+    };
+  }>;
 }
 
 function generateSevenDigitCode(existing: Map<string, GameRoom>): string {
@@ -166,7 +213,81 @@ export function attachMultiplayerServer(
 ) {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   const rooms = new Map<string, GameRoom>();
+  const onlineClients = new Map<string, OnlineClient>();
+  const trades = new Map<string, TradeSession>();
   const clientMeta = new WeakMap<WebSocket, ClientMeta>();
+
+  const broadcastPresence = () => {
+    const players = Array.from(onlineClients.values()).map((c) => ({
+      clientId: c.clientId,
+      userId: c.userId,
+      username: c.username,
+      avatarBlookId: c.avatarBlookId,
+      unlockedCount: c.unlockedCount,
+      inTrade: Boolean(c.activeTradeId),
+    }));
+    const payload = JSON.stringify({ type: 'presence:list', players });
+    for (const c of onlineClients.values()) {
+      if (c.ws.readyState === WebSocket.OPEN) {
+        c.ws.send(payload);
+      }
+    }
+  };
+
+  const serializeTrade = (trade: TradeSession) => {
+    const a = onlineClients.get(trade.initiatorClientId);
+    const b = onlineClients.get(trade.targetClientId);
+    return {
+      tradeId: trade.tradeId,
+      status: trade.status,
+      initiator: a
+        ? {
+            clientId: a.clientId,
+            userId: a.userId,
+            username: a.username,
+            avatarBlookId: a.avatarBlookId,
+          }
+        : null,
+      target: b
+        ? {
+            clientId: b.clientId,
+            userId: b.userId,
+            username: b.username,
+            avatarBlookId: b.avatarBlookId,
+          }
+        : null,
+      offerByClient: trade.offerByClient,
+      acceptedByClient: trade.acceptedByClient,
+    };
+  };
+
+  const sendTradeState = (trade: TradeSession) => {
+    const payload = JSON.stringify({
+      type: 'trade:state',
+      trade: serializeTrade(trade),
+    });
+    const a = onlineClients.get(trade.initiatorClientId);
+    const b = onlineClients.get(trade.targetClientId);
+    if (a && a.ws.readyState === WebSocket.OPEN) a.ws.send(payload);
+    if (b && b.ws.readyState === WebSocket.OPEN) b.ws.send(payload);
+  };
+
+  const cancelTrade = (tradeId: string, reason: string) => {
+    const trade = trades.get(tradeId);
+    if (!trade) return;
+    trade.status = 'CANCELLED';
+    trades.delete(tradeId);
+
+    const a = onlineClients.get(trade.initiatorClientId);
+    const b = onlineClients.get(trade.targetClientId);
+    if (a) a.activeTradeId = null;
+    if (b) b.activeTradeId = null;
+
+    const payload = JSON.stringify({ type: 'trade:cancelled', tradeId, reason });
+    if (a && a.ws.readyState === WebSocket.OPEN) a.ws.send(payload);
+    if (b && b.ws.readyState === WebSocket.OPEN) b.ws.send(payload);
+    broadcastPresence();
+  };
 
   const finishGame = async (room: GameRoom, forcedWinnerId?: string) => {
     if (room.status === 'FINISHED') return;
@@ -648,12 +769,277 @@ export function attachMultiplayerServer(
           meta.role = null;
           break;
         }
+        case 'presence:register':
+        case 'presence:update': {
+          const userId = String(msg.userId || '').trim();
+          const username = String(msg.username || '').trim();
+          if (!userId || !username) return;
+          const inv =
+            msg.inventory && typeof msg.inventory === 'object'
+              ? (msg.inventory as Record<string, number>)
+              : {};
+          const unlockedCount = Object.values(inv).filter((c) => Number(c) > 0).length;
+          const existing = onlineClients.get(meta.clientId);
+          onlineClients.set(meta.clientId, {
+            clientId: meta.clientId,
+            ws,
+            userId,
+            username,
+            avatarBlookId: String(msg.avatarBlookId || ''),
+            unlockedCount,
+            inventory: inv,
+            activeTradeId: existing?.activeTradeId ?? null,
+          });
+          broadcastPresence();
+          break;
+        }
+
+        case 'trade:initiate': {
+          const initiator = onlineClients.get(meta.clientId);
+          const target = onlineClients.get(String(msg.targetClientId || ''));
+          if (!initiator || !target) {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: 'trade:error',
+                  error: 'That player is no longer online.',
+                })
+              );
+            }
+            return;
+          }
+          if (initiator.clientId === target.clientId || initiator.userId === target.userId) {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: 'trade:error',
+                  error: 'You cannot trade with your own account.',
+                })
+              );
+            }
+            return;
+          }
+          if (initiator.activeTradeId || target.activeTradeId) {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: 'trade:error',
+                  error: 'One of the players is already in another trade.',
+                })
+              );
+            }
+            return;
+          }
+
+          const tradeId = `tr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          const trade: TradeSession = {
+            tradeId,
+            initiatorClientId: initiator.clientId,
+            targetClientId: target.clientId,
+            status: 'PENDING',
+            offerByClient: {
+              [initiator.clientId]: null,
+              [target.clientId]: null,
+            },
+            acceptedByClient: {
+              [initiator.clientId]: false,
+              [target.clientId]: false,
+            },
+          };
+          trades.set(tradeId, trade);
+          initiator.activeTradeId = tradeId;
+          target.activeTradeId = tradeId;
+
+          if (target.ws.readyState === WebSocket.OPEN) {
+            target.ws.send(
+              JSON.stringify({
+                type: 'trade:incoming',
+                trade: serializeTrade(trade),
+              })
+            );
+          }
+          sendTradeState(trade);
+          broadcastPresence();
+          break;
+        }
+
+        case 'trade:respond': {
+          const trade = trades.get(String(msg.tradeId || ''));
+          if (!trade || trade.targetClientId !== meta.clientId || trade.status !== 'PENDING') {
+            return;
+          }
+          if (!msg.accept) {
+            cancelTrade(trade.tradeId, 'Trade request was declined.');
+            return;
+          }
+          trade.status = 'NEGOTIATING';
+          sendTradeState(trade);
+          broadcastPresence();
+          break;
+        }
+
+        case 'trade:select_blook': {
+          const trade = trades.get(String(msg.tradeId || ''));
+          if (!trade || trade.status !== 'NEGOTIATING') return;
+          if (
+            meta.clientId !== trade.initiatorClientId &&
+            meta.clientId !== trade.targetClientId
+          ) {
+            return;
+          }
+          const sender = onlineClients.get(meta.clientId);
+          if (!sender) return;
+
+          const blookId = msg.blookId ? String(msg.blookId) : null;
+          if (blookId && (sender.inventory[blookId] || 0) < 1) {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: 'trade:error',
+                  error: 'You can only offer Blooks that you own.',
+                })
+              );
+            }
+            return;
+          }
+
+          trade.offerByClient[meta.clientId] = blookId;
+          // Any offer change resets both acceptances to protect against bait-and-switch
+          trade.acceptedByClient[trade.initiatorClientId] = false;
+          trade.acceptedByClient[trade.targetClientId] = false;
+          sendTradeState(trade);
+          break;
+        }
+
+        case 'trade:confirm': {
+          const trade = trades.get(String(msg.tradeId || ''));
+          if (!trade || trade.status !== 'NEGOTIATING') return;
+          if (
+            meta.clientId !== trade.initiatorClientId &&
+            meta.clientId !== trade.targetClientId
+          ) {
+            return;
+          }
+
+          const offerA = trade.offerByClient[trade.initiatorClientId];
+          const offerB = trade.offerByClient[trade.targetClientId];
+          if (msg.accepted && (!offerA || !offerB)) {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: 'trade:error',
+                  error: 'Both players must pick 1 Blook before confirming.',
+                })
+              );
+            }
+            return;
+          }
+
+          trade.acceptedByClient[meta.clientId] = Boolean(msg.accepted);
+          if (
+            trade.acceptedByClient[trade.initiatorClientId] &&
+            trade.acceptedByClient[trade.targetClientId] &&
+            offerA &&
+            offerB
+          ) {
+            const clientA = onlineClients.get(trade.initiatorClientId);
+            const clientB = onlineClients.get(trade.targetClientId);
+            if (!clientA || !clientB) {
+              cancelTrade(trade.tradeId, 'Partner disconnected during trade.');
+              return;
+            }
+
+            const result = await deps.onExecuteBlookTrade(
+              clientA.userId,
+              offerA,
+              clientB.userId,
+              offerB
+            );
+
+            if (!result.ok) {
+              trade.acceptedByClient[trade.initiatorClientId] = false;
+              trade.acceptedByClient[trade.targetClientId] = false;
+              sendTradeState(trade);
+              const errPayload = JSON.stringify({
+                type: 'trade:error',
+                error: result.error || 'Trade could not be completed.',
+              });
+              if (clientA.ws.readyState === WebSocket.OPEN) clientA.ws.send(errPayload);
+              if (clientB.ws.readyState === WebSocket.OPEN) clientB.ws.send(errPayload);
+              return;
+            }
+
+            trade.status = 'COMPLETED';
+            trades.delete(trade.tradeId);
+            clientA.activeTradeId = null;
+            clientB.activeTradeId = null;
+            clientA.inventory = result.inventoryA || clientA.inventory;
+            clientB.inventory = result.inventoryB || clientB.inventory;
+            clientA.avatarBlookId = result.equippedA ?? clientA.avatarBlookId;
+            clientB.avatarBlookId = result.equippedB ?? clientB.avatarBlookId;
+            clientA.unlockedCount = Object.values(clientA.inventory).filter((c) => c > 0).length;
+            clientB.unlockedCount = Object.values(clientB.inventory).filter((c) => c > 0).length;
+
+            if (clientA.ws.readyState === WebSocket.OPEN) {
+              clientA.ws.send(
+                JSON.stringify({
+                  type: 'trade:completed',
+                  tradeId: trade.tradeId,
+                  gaveBlookId: offerA,
+                  receivedBlookId: offerB,
+                  partnerUsername: clientB.username,
+                  inventory: clientA.inventory,
+                  equippedBlookId: clientA.avatarBlookId,
+                  historyEntry: result.historyEntryA,
+                })
+              );
+            }
+            if (clientB.ws.readyState === WebSocket.OPEN) {
+              clientB.ws.send(
+                JSON.stringify({
+                  type: 'trade:completed',
+                  tradeId: trade.tradeId,
+                  gaveBlookId: offerB,
+                  receivedBlookId: offerA,
+                  partnerUsername: clientA.username,
+                  inventory: clientB.inventory,
+                  equippedBlookId: clientB.avatarBlookId,
+                  historyEntry: result.historyEntryB,
+                })
+              );
+            }
+            broadcastPresence();
+            return;
+          }
+
+          sendTradeState(trade);
+          break;
+        }
+
+        case 'trade:cancel': {
+          const tradeId = String(msg.tradeId || '');
+          if (tradeId) {
+            cancelTrade(tradeId, 'Trade was cancelled.');
+          }
+          break;
+        }
       }
     });
 
     ws.on('close', () => {
       const meta = clientMeta.get(ws);
-      if (!meta || !meta.roomCode) return;
+      if (!meta) return;
+
+      const online = onlineClients.get(meta.clientId);
+      if (online) {
+        if (online.activeTradeId) {
+          cancelTrade(online.activeTradeId, `${online.username} disconnected.`);
+        }
+        onlineClients.delete(meta.clientId);
+        broadcastPresence();
+      }
+
+      if (!meta.roomCode) return;
       const room = rooms.get(meta.roomCode);
       if (!room) return;
 

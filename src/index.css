@@ -106,17 +106,20 @@
   }
 }
 
-/* Sparkle particles floating outwards */
+/* Confetti burst outwards with gravity drift and spin */
 @keyframes particleBurst {
   0% {
-    transform: translate(0, 0) scale(0) rotate(0deg);
+    transform: translate(0px, 0px) scale(0.3) rotate(0deg);
     opacity: 1;
   }
-  60% {
+  25% {
     opacity: 1;
+  }
+  75% {
+    opacity: 0.95;
   }
   100% {
-    transform: translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) scale(1.3) rotate(180deg);
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(1.1) rotate(var(--rot, 360deg));
     opacity: 0;
   }
 }

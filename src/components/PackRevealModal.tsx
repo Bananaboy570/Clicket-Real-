@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BlookItem, PackInfo, RARITY_COLORS } from '../data/blooks';
 import { BlookArt } from './BlookArt';
 import { PackCoverArt } from './PackCoverArt';
@@ -17,6 +17,7 @@ interface PackRevealModalProps {
 }
 
 type PackAnimationPhase = 'READY' | 'SHAKING' | 'TEARING' | 'BURST' | 'REVEALED';
+type ConfettiShape = 'triangle' | 'rectangle' | 'circle';
 
 function playSfx(type: 'shake' | 'rip' | 'reveal' | 'mystic') {
   try {
@@ -81,79 +82,180 @@ function playSfx(type: 'shake' | 'rip' | 'reveal' | 'mystic') {
   }
 }
 
-const CircusStageRevealCard: React.FC<{ blook: BlookItem; isNew: boolean }> = ({
+/**
+ * Generates lighter & darker shades of the exact rarity color so all confetti stays within that rarity shade.
+ */
+function getRarityShades(hex: string): string[] {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) {
+    return [hex];
+  }
+
+  const mix = (targetR: number, targetG: number, targetB: number, amount: number) => {
+    const nr = Math.round(r + (targetR - r) * amount);
+    const ng = Math.round(g + (targetG - g) * amount);
+    const nb = Math.round(b + (targetB - b) * amount);
+    return `rgb(${nr}, ${ng}, ${nb})`;
+  };
+
+  return [
+    hex,
+    mix(255, 255, 255, 0.25),
+    mix(255, 255, 255, 0.45),
+    mix(0, 0, 0, 0.18),
+    mix(0, 0, 0, 0.32),
+  ];
+}
+
+const ConfettiPieceSvg: React.FC<{ shape: ConfettiShape; color: string; size: number }> = ({
+  shape,
+  color,
+  size,
+}) => {
+  if (shape === 'triangle') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+        <polygon points="12,2 22,21 2,21" fill={color} />
+      </svg>
+    );
+  }
+  if (shape === 'rectangle') {
+    return (
+      <svg width={size * 1.15} height={size * 0.72} viewBox="0 0 28 18" aria-hidden="true">
+        <rect x="1" y="1" width="26" height="16" rx="2.5" fill={color} />
+      </svg>
+    );
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill={color} />
+    </svg>
+  );
+};
+
+const StageRevealCard: React.FC<{ packId: string; blook: BlookItem; isNew: boolean }> = ({
+  packId,
   blook,
   isNew,
 }) => {
   const rarityColor = RARITY_COLORS[blook.rarity];
+  const isAthletes = packId === 'athletes' || blook.packId === 'athletes';
 
   return (
     <div className="flex flex-col items-center">
       {/* Rarity Pill Badge */}
       <div
-        className="mb-3 px-6 py-1.5 rounded-full font-nunito font-black text-lg tracking-wide shadow-xl border-2 border-white/40 animate-new-badge"
+        className="mb-3 px-6 py-1.5 rounded-full font-nunito font-black text-lg tracking-wide shadow-xl border-2 border-white/50 animate-new-badge"
         style={{ backgroundColor: rarityColor, color: '#ffffff' }}
       >
         {blook.rarity}
       </div>
 
-      {/* Exact Rounded Black Frame with Circus Stage Interior from 1.png */}
-      <div className="relative w-[340px] h-[360px] bg-black rounded-[38px] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center justify-center overflow-hidden border-2 border-white/10">
-        <svg viewBox="0 0 300 320" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <clipPath id="stageWindowClip">
-              <path d="M18 32 Q150 4 282 32 V298 H18 Z" />
-            </clipPath>
-          </defs>
+      {/* Rounded Black Frame matching real Blooket pack reveal card */}
+      <div className="relative w-[340px] h-[360px] bg-black rounded-[38px] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.65)] flex items-center justify-center overflow-hidden border-2 border-white/20">
+        {isAthletes ? (
+          <svg viewBox="0 0 300 320" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="athletesWindowClip">
+                <rect x="14" y="12" width="272" height="296" rx="28" />
+              </clipPath>
+              <linearGradient id="stadiumSky" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#1e3a8a" />
+                <stop offset="45%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#bbf7d0" />
+              </linearGradient>
+            </defs>
 
-          <g clipPath="url(#stageWindowClip)">
-            <rect x="18" y="10" width="264" height="245" fill="#d97706" />
-            {[18, 42, 66, 90, 114, 138, 162, 186, 210, 234, 258].map((x, idx) => (
-              <rect
-                key={x}
-                x={x}
-                y="10"
-                width="24"
-                height="245"
-                fill={idx % 2 === 0 ? '#ea8a1a' : '#c96f0c'}
-              />
-            ))}
+            <g clipPath="url(#athletesWindowClip)">
+              {/* Stadium Sky & Floodlight Glow */}
+              <rect x="14" y="12" width="272" height="190" fill="url(#stadiumSky)" />
+              <circle cx="52" cy="40" r="32" fill="#ffffff" opacity="0.22" />
+              <circle cx="248" cy="40" r="32" fill="#ffffff" opacity="0.22" />
 
-            {/* Left Curtain */}
-            <path d="M18 35 H108 C88 100 72 165 65 245 H18 Z" fill="#991b1b" />
-            <path d="M18 35 H85 C70 100 58 165 50 245 H18 Z" fill="#dc2626" />
-            <path d="M18 35 H56 C46 100 38 165 32 245 H18 Z" fill="#b91c1c" />
-            <path d="M18 112 L68 124 L64 142 L18 134 Z" fill="#facc15" />
+              {/* Stadium Bleachers Silhouette */}
+              <rect x="14" y="110" width="272" height="45" fill="#1e293b" opacity="0.45" />
+              <line x1="14" y1="125" x2="286" y2="125" stroke="#ffffff" strokeWidth="2" opacity="0.25" />
+              <line x1="14" y1="140" x2="286" y2="140" stroke="#ffffff" strokeWidth="2" opacity="0.25" />
 
-            {/* Right Curtain */}
-            <path d="M282 35 H192 C212 100 228 165 235 245 H282 Z" fill="#991b1b" />
-            <path d="M282 35 H215 C230 100 242 165 250 245 H282 Z" fill="#dc2626" />
-            <path d="M282 35 H244 C254 100 262 165 268 245 H282 Z" fill="#b91c1c" />
-            <path d="M282 112 L232 124 L236 142 L282 134 Z" fill="#facc15" />
+              {/* Mowed Green Athletic Turf Stripes */}
+              <rect x="14" y="150" width="272" height="160" fill="#22c55e" />
+              {[14, 48, 82, 116, 150, 184, 218, 252].map((x, idx) => (
+                <rect
+                  key={x}
+                  x={x}
+                  y="150"
+                  width="34"
+                  height="160"
+                  fill={idx % 2 === 0 ? '#4ade80' : '#22c55e'}
+                />
+              ))}
 
-            {/* Proscenium Arch */}
-            <path d="M14 28 Q150 -2 286 28 L286 78 Q150 48 14 78 Z" fill="#6b3410" />
-            {[55, 95, 135, 165, 205, 245].map((x) => (
-              <line key={x} x1={x} y1="12" x2={x} y2="72" stroke="#4a2208" strokeWidth="2.5" />
-            ))}
-            <path d="M14 74 Q150 44 286 74 L286 82 Q150 52 14 82 Z" fill="#4a2208" />
+              {/* Crisp White Field Markings */}
+              <line x1="14" y1="154" x2="286" y2="154" stroke="#ffffff" strokeWidth="4" opacity="0.85" />
+              <ellipse cx="150" cy="232" rx="68" ry="26" fill="none" stroke="#ffffff" strokeWidth="4" opacity="0.7" />
+              <line x1="150" y1="154" x2="150" y2="308" stroke="#ffffff" strokeWidth="3.5" opacity="0.7" />
+            </g>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 300 320" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="stageWindowClip">
+                <path d="M18 32 Q150 4 282 32 V298 H18 Z" />
+              </clipPath>
+            </defs>
 
-            {/* Stage Floor and Posts */}
-            <rect x="24" y="252" width="252" height="46" fill="#2b1204" />
-            {[32, 58, 84, 110, 136, 162, 188, 214, 240, 260].map((x) => (
-              <rect key={x} x={x} y="254" width="14" height="44" fill="#783912" />
-            ))}
-            <rect x="12" y="236" width="276" height="14" rx="2" fill="#6b3410" />
-            <rect x="18" y="248" width="264" height="8" fill="#4a2208" />
-          </g>
-        </svg>
+            <g clipPath="url(#stageWindowClip)">
+              <rect x="18" y="10" width="264" height="245" fill="#d97706" />
+              {[18, 42, 66, 90, 114, 138, 162, 186, 210, 234, 258].map((x, idx) => (
+                <rect
+                  key={x}
+                  x={x}
+                  y="10"
+                  width="24"
+                  height="245"
+                  fill={idx % 2 === 0 ? '#ea8a1a' : '#c96f0c'}
+                />
+              ))}
+
+              {/* Left Curtain */}
+              <path d="M18 35 H108 C88 100 72 165 65 245 H18 Z" fill="#991b1b" />
+              <path d="M18 35 H85 C70 100 58 165 50 245 H18 Z" fill="#dc2626" />
+              <path d="M18 35 H56 C46 100 38 165 32 245 H18 Z" fill="#b91c1c" />
+              <path d="M18 112 L68 124 L64 142 L18 134 Z" fill="#facc15" />
+
+              {/* Right Curtain */}
+              <path d="M282 35 H192 C212 100 228 165 235 245 H282 Z" fill="#991b1b" />
+              <path d="M282 35 H215 C230 100 242 165 250 245 H282 Z" fill="#dc2626" />
+              <path d="M282 35 H244 C254 100 262 165 268 245 H282 Z" fill="#b91c1c" />
+              <path d="M282 112 L232 124 L236 142 L282 134 Z" fill="#facc15" />
+
+              {/* Proscenium Arch */}
+              <path d="M14 28 Q150 -2 286 28 L286 78 Q150 48 14 78 Z" fill="#6b3410" />
+              {[55, 95, 135, 165, 205, 245].map((x) => (
+                <line key={x} x1={x} y1="12" x2={x} y2="72" stroke="#4a2208" strokeWidth="2.5" />
+              ))}
+              <path d="M14 74 Q150 44 286 74 L286 82 Q150 52 14 82 Z" fill="#4a2208" />
+
+              {/* Stage Floor and Posts */}
+              <rect x="24" y="252" width="252" height="46" fill="#2b1204" />
+              {[32, 58, 84, 110, 136, 162, 188, 214, 240, 260].map((x) => (
+                <rect key={x} x={x} y="254" width="14" height="44" fill="#783912" />
+              ))}
+              <rect x="12" y="236" width="276" height="14" rx="2" fill="#6b3410" />
+              <rect x="18" y="248" width="264" height="8" fill="#4a2208" />
+            </g>
+          </svg>
+        )}
 
         {/* Blook Name at Top */}
         <div className="absolute top-9 inset-x-4 flex justify-center text-center pointer-events-none">
           <h3
             className="font-titan text-white text-[26px] leading-tight tracking-wide drop-shadow-[0_3px_2px_rgba(0,0,0,0.65)]"
             style={{
-              WebkitTextStroke: '2px #3b1908',
+              WebkitTextStroke: isAthletes ? '2px #14532d' : '2px #3b1908',
               paintOrder: 'stroke fill',
             }}
           >
@@ -171,7 +273,7 @@ const CircusStageRevealCard: React.FC<{ blook: BlookItem; isNew: boolean }> = ({
           <span
             className="font-titan text-white text-[22px] tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.85)]"
             style={{
-              WebkitTextStroke: '1.8px #2b1204',
+              WebkitTextStroke: isAthletes ? '1.8px #14532d' : '1.8px #2b1204',
               paintOrder: 'stroke fill',
             }}
           >
@@ -196,7 +298,6 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
 
   const isMulti = pulls.length > 1;
 
-  // Highlight color uses the rarest pull in the batch
   const rarityRank: Record<string, number> = {
     Uncommon: 1,
     Rare: 2,
@@ -242,22 +343,31 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
     }, 1450);
   };
 
-  const particles = [
-    { x: '-160px', y: '-140px', color: rarityColor, delay: '0.05s', size: '14px' },
-    { x: '170px', y: '-130px', color: '#fde047', delay: '0.1s', size: '18px' },
-    { x: '-190px', y: '20px', color: '#38bdf8', delay: '0.08s', size: '12px' },
-    { x: '190px', y: '30px', color: rarityColor, delay: '0.12s', size: '16px' },
-    { x: '-120px', y: '160px', color: '#fbbf24', delay: '0.15s', size: '14px' },
-    { x: '130px', y: '170px', color: '#f43f5e', delay: '0.07s', size: '15px' },
-    { x: '0px', y: '-210px', color: '#ffffff', delay: '0.04s', size: '20px' },
-    { x: '0px', y: '210px', color: rarityColor, delay: '0.14s', size: '16px' },
-    { x: '-90px', y: '-180px', color: '#a855f7', delay: '0.11s', size: '13px' },
-    { x: '90px', y: '-180px', color: '#22c55e', delay: '0.09s', size: '14px' },
-    { x: '-180px', y: '100px', color: '#facc15', delay: '0.13s', size: '15px' },
-    { x: '170px', y: '110px', color: '#ffffff', delay: '0.06s', size: '18px' },
-  ];
+  // Confetti strictly using Triangle, Rectangle, and Circle shapes in shades of the pulled blook's rarity color
+  const confettiParticles = useMemo(() => {
+    const shades = getRarityShades(rarityColor);
+    const shapes: ConfettiShape[] = ['triangle', 'rectangle', 'circle'];
+    const total = 33;
+    return Array.from({ length: total }, (_, idx) => {
+      const angle = (idx / total) * Math.PI * 2 + (idx % 3) * 0.14;
+      const dist = 160 + (idx % 5) * 58;
+      const tx = Math.round(Math.cos(angle) * dist);
+      const ty = Math.round(Math.sin(angle) * dist + 25);
+      const rot = (idx % 2 === 0 ? 1 : -1) * (180 + (idx % 4) * 90);
+      return {
+        tx: `${tx}px`,
+        ty: `${ty}px`,
+        rot: `${rot}deg`,
+        shape: shapes[idx % 3],
+        color: shades[idx % shades.length],
+        size: 13 + (idx % 4) * 3,
+        delay: `${(idx % 6) * 0.035}s`,
+        duration: `${0.95 + (idx % 3) * 0.2}s`,
+      };
+    });
+  }, [rarityColor]);
 
-  // Aggregate multi-pulls by blook id for a clean summary grid while keeping any new status
+  // Aggregate multi-pulls by blook id
   const groupedPulls = Object.values(
     pulls.reduce<Record<string, { blook: BlookItem; count: number; isNew: boolean }>>(
       (acc, p) => {
@@ -273,15 +383,27 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
     )
   ).sort((a, b) => rarityRank[b.blook.rarity] - rarityRank[a.blook.rarity]);
 
+  const isOpenedBg = phase === 'BURST' || phase === 'REVEALED';
+
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-[4px] p-4 select-none overflow-y-auto"
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 select-none overflow-y-auto transition-colors duration-500 ${
+        isOpenedBg ? '' : 'bg-black/80 backdrop-blur-[4px]'
+      }`}
+      style={
+        isOpenedBg
+          ? {
+              backgroundColor: pack.revealBgColor,
+              backgroundImage: `radial-gradient(circle at center, rgba(255,255,255,0.45) 0%, ${pack.revealBgColor} 68%)`,
+            }
+          : undefined
+      }
       onClick={() => {
         if (phase === 'REVEALED' && !inspectedPull) onClose();
       }}
     >
       {/* Dynamic Background Rays during Burst and Revealed */}
-      {(phase === 'BURST' || phase === 'REVEALED') && (
+      {isOpenedBg && (
         <div className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden opacity-45">
           <div
             className="w-[850px] h-[850px] rounded-full animate-rays-fast"
@@ -294,22 +416,25 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
         </div>
       )}
 
-      {/* Particle Explosions */}
-      {(phase === 'BURST' || phase === 'REVEALED') && (
-        <div className="pointer-events-none fixed inset-0 flex items-center justify-center">
-          {particles.map((p, i) => (
+      {/* Confetti Explosion: Triangle, Rectangle, and Circle in Rarity Color Shades */}
+      {isOpenedBg && (
+        <div className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden z-20">
+          {confettiParticles.map((p, i) => (
             <div
               key={i}
-              className="absolute rounded-full shadow-lg"
-              style={{
-                width: p.size,
-                height: p.size,
-                backgroundColor: p.color,
-                animation: `particleBurst 0.9s cubic-bezier(0.12, 0.8, 0.32, 1) ${p.delay} forwards`,
-                transform: `translate(${p.x}, ${p.y})`,
-                boxShadow: `0 0 12px ${p.color}`,
-              }}
-            />
+              className="absolute"
+              style={
+                {
+                  '--tx': p.tx,
+                  '--ty': p.ty,
+                  '--rot': p.rot,
+                  animation: `particleBurst ${p.duration} cubic-bezier(0.12, 0.8, 0.32, 1) ${p.delay} forwards`,
+                  filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.2))`,
+                } as React.CSSProperties
+              }
+            >
+              <ConfettiPieceSvg shape={p.shape} color={p.color} size={p.size} />
+            </div>
           ))}
         </div>
       )}
@@ -326,9 +451,13 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
             e.stopPropagation();
             handleStartOpening();
           }}
-          className="relative flex flex-col items-center cursor-pointer group"
+          className="relative flex flex-col items-center cursor-pointer group z-10"
         >
-          <div className="relative w-64 h-80 flex items-center justify-center">
+          <div
+            className={`relative flex items-center justify-center ${
+              pack.id === 'athletes' ? 'w-[340px] h-80' : 'w-64 h-80'
+            }`}
+          >
             {phase === 'READY' && (
               <div className="w-full h-full animate-float-pack transition-transform group-hover:scale-105 relative">
                 <PackCoverArt packId={pack.id} className="w-full h-full" />
@@ -382,21 +511,21 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
       {phase === 'REVEALED' && !isMulti && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative flex flex-col items-center animate-stage-reveal"
+          className="relative z-30 flex flex-col items-center animate-stage-reveal"
         >
-          <CircusStageRevealCard blook={pulls[0].blook} isNew={pulls[0].isNew} />
+          <StageRevealCard packId={pack.id} blook={pulls[0].blook} isNew={pulls[0].isNew} />
 
           <div className="mt-6 flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-7 py-2.5 rounded-xl bg-white text-[#18a4e0] font-titan text-lg shadow-[0_5px_0_#cbd5e1] active:translate-y-1 active:shadow-none hover:bg-slate-50 transition-all cursor-pointer whitespace-nowrap shrink-0"
+              className="px-7 py-2.5 rounded-xl bg-white text-[#dc2626] font-titan text-lg shadow-[0_5px_0_#cbd5e1] active:translate-y-1 active:shadow-none hover:bg-slate-50 transition-all cursor-pointer whitespace-nowrap shrink-0"
             >
               OK
             </button>
             {onOpenAnother && canAffordAnother && (
               <button
                 onClick={onOpenAnother}
-                className="px-7 py-2.5 rounded-xl bg-[#00c2cb] text-white font-titan text-lg shadow-[0_5px_0_#008b94] active:translate-y-1 active:shadow-none hover:brightness-105 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                className="px-7 py-2.5 rounded-xl bg-[#f87171] text-white font-titan text-lg shadow-[0_5px_0_#dc2626] active:translate-y-1 active:shadow-none hover:brightness-105 transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
                 Open Another ({pack.price})
               </button>
@@ -409,17 +538,18 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
       {phase === 'REVEALED' && isMulti && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative flex flex-col items-center max-w-4xl w-full animate-stage-reveal"
+          className="relative z-30 flex flex-col items-center max-w-4xl w-full animate-stage-reveal"
         >
           {inspectedPull ? (
             <div className="flex flex-col items-center">
-              <CircusStageRevealCard
+              <StageRevealCard
+                packId={pack.id}
                 blook={inspectedPull.blook}
                 isNew={inspectedPull.isNew}
               />
               <button
                 onClick={() => setInspectedPull(null)}
-                className="mt-5 px-6 py-2.5 rounded-xl bg-white text-[#933da8] font-titan text-lg shadow-[0_5px_0_#cbd5e1] cursor-pointer"
+                className="mt-5 px-6 py-2.5 rounded-xl bg-white text-[#dc2626] font-titan text-lg shadow-[0_5px_0_#cbd5e1] cursor-pointer"
               >
                 Back to All {pulls.length} Pulls
               </button>
@@ -428,10 +558,10 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
             <div className="w-full bg-slate-900/90 border-4 border-white/25 rounded-3xl p-6 shadow-2xl">
               <div className="text-center mb-5">
                 <h2 className="font-titan text-3xl text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.5)]">
-                  Opened {pulls.length} Circus Packs!
+                  Opened {pulls.length} {pack.name}s!
                 </h2>
                 <p className="font-nunito font-bold text-white/75 text-sm">
-                  Click any blook card below to view it on the Circus Stage
+                  Click any blook card below to view its reveal card
                 </p>
               </div>
 
@@ -479,14 +609,14 @@ export const PackRevealModal: React.FC<PackRevealModalProps> = ({
               <div className="mt-6 flex items-center justify-center gap-3">
                 <button
                   onClick={onClose}
-                  className="px-7 py-2.5 rounded-xl bg-white text-[#18a4e0] font-titan text-lg shadow-[0_5px_0_#cbd5e1] active:translate-y-1 active:shadow-none hover:bg-slate-50 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                  className="px-7 py-2.5 rounded-xl bg-white text-[#dc2626] font-titan text-lg shadow-[0_5px_0_#cbd5e1] active:translate-y-1 active:shadow-none hover:bg-slate-50 transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
                   OK
                 </button>
                 {onOpenAnother && canAffordAnother && (
                   <button
                     onClick={onOpenAnother}
-                    className="px-7 py-2.5 rounded-xl bg-[#00c2cb] text-white font-titan text-lg shadow-[0_5px_0_#008b94] active:translate-y-1 active:shadow-none hover:brightness-105 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                    className="px-7 py-2.5 rounded-xl bg-[#f87171] text-white font-titan text-lg shadow-[0_5px_0_#dc2626] active:translate-y-1 active:shadow-none hover:brightness-105 transition-all cursor-pointer whitespace-nowrap shrink-0"
                   >
                     Open {pulls.length} More ({(pack.price * pulls.length).toLocaleString()})
                   </button>

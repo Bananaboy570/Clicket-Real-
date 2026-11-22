@@ -178,7 +178,7 @@ export const PlayTriviaView: React.FC<PlayTriviaModalProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-[#933da8] border-2 border-[#7b2cbf] px-4 py-1.5 rounded-xl text-white font-nunito font-black text-lg shadow-md">
+          <div className="flex items-center gap-2 bg-[#dc2626] border-2 border-[#b91c1c] px-4 py-1.5 rounded-xl text-white font-nunito font-black text-lg shadow-md">
             <BlooketTokenIcon className="w-6 h-6" />
             <span>+{sessionTokens} Earned</span>
           </div>
@@ -201,7 +201,7 @@ export const PlayTriviaView: React.FC<PlayTriviaModalProps> = ({
             ))}
           </div>
           <div className="bg-white rounded-3xl p-8 shadow-[0_10px_0_rgba(0,0,0,0.18)] w-full text-slate-800">
-            <h2 className="font-titan text-3xl text-[#933da8] mb-3">
+            <h2 className="font-titan text-3xl text-[#dc2626] mb-3">
               Answer Questions & Open Token Chests!
             </h2>
             <p className="font-nunito font-bold text-slate-600 text-base mb-6">
@@ -210,7 +210,7 @@ export const PlayTriviaView: React.FC<PlayTriviaModalProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-4">
               <button
                 onClick={startGame}
-                className="px-8 py-3.5 rounded-2xl bg-[#00c2cb] text-white font-titan text-2xl shadow-[0_6px_0_#008b94] active:translate-y-1 active:shadow-none hover:brightness-105 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                className="px-8 py-3.5 rounded-2xl bg-[#f87171] text-white font-titan text-2xl shadow-[0_6px_0_#dc2626] active:translate-y-1 active:shadow-none hover:brightness-105 transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
                 Start Trivia Game
               </button>
@@ -352,7 +352,7 @@ export const PlayTriviaView: React.FC<PlayTriviaModalProps> = ({
             <div className="w-24 h-24 mx-auto mb-3">
               <BlookArt id="the-golden-ticket" className="w-full h-full" />
             </div>
-            <h2 className="font-titan text-3xl text-[#933da8] mb-2">Game Complete!</h2>
+            <h2 className="font-titan text-3xl text-[#dc2626] mb-2">Game Complete!</h2>
             <p className="font-nunito font-bold text-slate-600 mb-6">
               You answered {correctCount} of {questions.length} questions correctly!
             </p>
@@ -365,13 +365,13 @@ export const PlayTriviaView: React.FC<PlayTriviaModalProps> = ({
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={startGame}
-                className="px-6 py-3 rounded-xl bg-[#00c2cb] text-white font-titan text-lg shadow-[0_5px_0_#008b94] cursor-pointer whitespace-nowrap shrink-0"
+                className="px-6 py-3 rounded-xl bg-[#f87171] text-white font-titan text-lg shadow-[0_5px_0_#dc2626] cursor-pointer whitespace-nowrap shrink-0"
               >
                 Play Again
               </button>
               <button
                 onClick={onExit}
-                className="px-6 py-3 rounded-xl bg-[#933da8] text-white font-titan text-lg shadow-[0_5px_0_#6b21a8] cursor-pointer whitespace-nowrap shrink-0"
+                className="px-6 py-3 rounded-xl bg-[#dc2626] text-white font-titan text-lg shadow-[0_5px_0_#991b1b] cursor-pointer whitespace-nowrap shrink-0"
               >
                 Go Open Circus Packs!
               </button>

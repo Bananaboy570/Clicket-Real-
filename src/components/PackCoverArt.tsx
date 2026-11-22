@@ -244,13 +244,130 @@ export const CircusPackCoverSVG: React.FC<{ className?: string }> = ({ className
   </svg>
 );
 
-export const PackCoverArt: React.FC<{ packId?: string; className?: string }> = ({ className = 'w-36 h-44' }) => {
+export const PackCoverArt: React.FC<{ packId?: string; className?: string }> = ({
+  packId = 'circus',
+  className = 'w-36 h-44',
+}) => {
+  if (packId === 'athletes') {
+    return (
+      <div className={`${className} drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] transition-transform duration-200 flex items-center justify-center`}>
+        <img
+          src="/assets/aistudio/Pack_Designs__2_-removebg-preview_c4530e10.png"
+          alt="Athletes Pack"
+          className="w-full h-full object-contain select-none"
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className={`${className} drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] transition-transform duration-200`}>
-      <CircusPackCoverSVG className="w-full h-full" />
+    <div className={`${className} drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] transition-transform duration-200 flex items-center justify-center`}>
+      <img
+        src="/assets/aistudio/Pack_Designs__4_-removebg-preview_40ec04e2.png"
+        alt="Circus Pack"
+        className="w-full h-full object-contain select-none"
+        draggable={false}
+      />
     </div>
   );
 };
+
+/**
+ * Clown face icon for the bottom-right corner of the Circus Pack card
+ */
+export const CircusClownFaceIcon: React.FC<{ className?: string }> = ({
+  className = 'w-full h-full',
+}) => (
+  <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
+    {/* Fluffy curly clown hair puffs */}
+    <circle cx="20" cy="44" r="13" fill="#b91c1c" />
+    <circle cx="17" cy="57" r="11" fill="#dc2626" />
+    <circle cx="25" cy="33" r="10" fill="#ef4444" />
+    <circle cx="80" cy="44" r="13" fill="#b91c1c" />
+    <circle cx="83" cy="57" r="11" fill="#dc2626" />
+    <circle cx="75" cy="33" r="10" fill="#ef4444" />
+
+    {/* Clown face base */}
+    <circle cx="50" cy="54" r="30" fill="#fff7ed" stroke="#450a0a" strokeWidth="3.5" />
+
+    {/* Tiny tilted circus hat */}
+    <g transform="translate(50, 21) rotate(-8)">
+      <ellipse cx="0" cy="7" rx="18" ry="4.5" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+      <path d="M-11 6 L-9 -10 H9 L11 6 Z" fill="#facc15" stroke="#0f172a" strokeWidth="2" />
+      <rect x="-10" y="1" width="20" height="4" fill="#dc2626" />
+      <circle cx="0" cy="-12" r="4" fill="#ef4444" stroke="#0f172a" strokeWidth="1.5" />
+    </g>
+
+    {/* Painted eyebrow arches & eyes */}
+    <path d="M31 40 Q38 34 44 40" stroke="#2563eb" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+    <path d="M56 40 Q62 34 69 40" stroke="#2563eb" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+    <ellipse cx="38" cy="48" rx="4.5" ry="5.5" fill="#1e293b" />
+    <circle cx="36.5" cy="46" r="1.6" fill="#ffffff" />
+    <ellipse cx="62" cy="48" rx="4.5" ry="5.5" fill="#1e293b" />
+    <circle cx="60.5" cy="46" r="1.6" fill="#ffffff" />
+
+    {/* Rosy cheeks */}
+    <circle cx="29" cy="60" r="5.5" fill="#fca5a5" />
+    <circle cx="71" cy="60" r="5.5" fill="#fca5a5" />
+
+    {/* Big cheerful clown smile */}
+    <path
+      d="M33 65 Q50 81 67 65"
+      stroke="#dc2626"
+      strokeWidth="4.5"
+      strokeLinecap="round"
+      fill="none"
+    />
+
+    {/* Classic big red clown nose */}
+    <circle cx="50" cy="56" r="8" fill="#ef4444" stroke="#7f1d1d" strokeWidth="2.2" />
+    <circle cx="47.5" cy="53.5" r="2.3" fill="#ffffff" opacity="0.85" />
+  </svg>
+);
+
+/**
+ * Classic soccer ball icon for the bottom-right corner of the Athletes Pack card
+ */
+export const AthletesSoccerBallIcon: React.FC<{ className?: string }> = ({
+  className = 'w-full h-full',
+}) => (
+  <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <clipPath id="soccerBallClip">
+        <circle cx="50" cy="50" r="42" />
+      </clipPath>
+    </defs>
+
+    {/* White leather sphere */}
+    <circle cx="50" cy="50" r="42" fill="#f8fafc" stroke="#0f172a" strokeWidth="4.5" />
+
+    <g clipPath="url(#soccerBallClip)">
+      {/* Subtle shading crescent */}
+      <path d="M62 10 A42 42 0 0 1 20 88 A46 46 0 0 0 62 10 Z" fill="#cbd5e1" opacity="0.65" />
+
+      {/* Connecting panel seams */}
+      <line x1="50" y1="35" x2="50" y2="14" stroke="#1e293b" strokeWidth="3.2" />
+      <line x1="65" y1="45" x2="86" y2="38" stroke="#1e293b" strokeWidth="3.2" />
+      <line x1="59" y1="63" x2="73" y2="84" stroke="#1e293b" strokeWidth="3.2" />
+      <line x1="41" y1="63" x2="27" y2="84" stroke="#1e293b" strokeWidth="3.2" />
+      <line x1="35" y1="45" x2="14" y2="38" stroke="#1e293b" strokeWidth="3.2" />
+
+      {/* Center pentagon */}
+      <polygon points="50,34 66,45 60,64 40,64 34,45" fill="#1e293b" />
+
+      {/* Outer edge pentagon patches */}
+      <polygon points="50,15 39,7 61,7" fill="#1e293b" />
+      <polygon points="84,38 94,28 96,49" fill="#1e293b" />
+      <polygon points="72,83 88,78 78,94" fill="#1e293b" />
+      <polygon points="28,83 12,78 22,94" fill="#1e293b" />
+      <polygon points="16,38 6,28 4,49" fill="#1e293b" />
+    </g>
+
+    {/* Outer outline crispness */}
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#0f172a" strokeWidth="4.5" />
+  </svg>
+);
 
 export const MarketShopkeeperBooth: React.FC = () => (
   <svg viewBox="0 0 260 360" className="w-full max-w-[240px] h-auto drop-shadow-xl" xmlns="http://www.w3.org/2000/svg">

@@ -12,6 +12,14 @@ const PORT = 3000;
 const DATA_DIR = path.resolve(process.cwd(), '.data');
 const DB_FILE = path.join(DATA_DIR, 'clicket-db.json');
 
+export interface TradeHistoryEntry {
+  id: string;
+  timestamp: string;
+  partnerUsername: string;
+  gaveBlookId: string;
+  receivedBlookId: string;
+}
+
 interface StoredUser {
   id: string;
   username: string;
@@ -29,6 +37,7 @@ interface StoredUser {
   equippedBlookId: string;
   lastDailyPlayAt?: number | null;
   lastWheelSpinAt?: number | null;
+  tradeHistory?: TradeHistoryEntry[];
   createdAt: string;
 }
 
@@ -86,6 +95,10 @@ function generateSixDigitCode(): string {
 }
 
 function sanitizeUser(u: StoredUser) {
+  const safeEquipped =
+    u.equippedBlookId && (u.inventory?.[u.equippedBlookId] || 0) > 0
+      ? u.equippedBlookId
+      : '';
   return {
     id: u.id,
     username: u.username,
@@ -95,10 +108,43 @@ function sanitizeUser(u: StoredUser) {
     inventory: u.inventory,
     clickUpgradeLevel: u.clickUpgradeLevel,
     bestDailyClicks: u.bestDailyClicks,
-    equippedBlookId: u.equippedBlookId,
+    equippedBlookId: safeEquipped,
     lastDailyPlayAt: u.lastDailyPlayAt ?? null,
     lastWheelSpinAt: u.lastWheelSpinAt ?? null,
+    tradeHistory: (u.tradeHistory || []).slice(0, 50),
   };
+}
+
+function findUserByUsername(db: DatabaseSchema, username: string): StoredUser | undefined {
+  const target = username.trim().toLowerCase();
+  if (!target) return undefined;
+  return Object.values(db.users).find(
+    (u) => u.username.trim().toLowerCase() === target
+  );
+}
+
+function findUserEntry(
+  db: DatabaseSchema,
+  identifier: string
+): { key: string; user: StoredUser } | undefined {
+  const clean = identifier.trim().toLowerCase();
+  if (!clean) return undefined;
+  if (db.users[clean]) {
+    return { key: clean, user: db.users[clean] };
+  }
+  const byUserKey = `user:${clean}`;
+  if (db.users[byUserKey]) {
+    return { key: byUserKey, user: db.users[byUserKey] };
+  }
+  for (const [key, u] of Object.entries(db.users)) {
+    if (
+      u.username.trim().toLowerCase() === clean ||
+      (u.email && u.email.trim().toLowerCase() === clean)
+    ) {
+      return { key, user: u };
+    }
+  }
+  return undefined;
 }
 
 const DEFAULT_RESEND_FROM = 'Clicket <onboarding@resend.dev>';
@@ -213,23 +259,16 @@ async function createServer() {
   const app = express();
   app.use(express.json({ limit: '2mb' }));
 
-  // Sign Up: Username, Email, Password, Retype Password -> send 6-digit code
+  // Sign Up: Username and Password only (no duplicate usernames allowed)
   app.post('/api/auth/signup', async (req, res) => {
     try {
-      const { username, email, password, retypePassword } = req.body ?? {};
+      const { username, password } = req.body ?? {};
 
       const cleanUsername = String(username || '').trim();
-      const cleanEmail = String(email || '').trim().toLowerCase();
       const rawPassword = String(password || '');
-      const rawRetype = String(retypePassword || '');
 
-      if (cleanUsername.length < 2 || cleanUsername.length > 18) {
-        res.status(400).json({ error: 'Username must be between 2 and 18 characters.' });
-        return;
-      }
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-        res.status(400).json({ error: 'Please enter a valid email address.' });
+      if (cleanUsername.length < 2 || cleanUsername.length > 30) {
+        res.status(400).json({ error: 'Username must be between 2 and 30 characters.' });
         return;
       }
 
@@ -238,48 +277,45 @@ async function createServer() {
         return;
       }
 
-      if (rawPassword !== rawRetype) {
-        res.status(400).json({ error: 'Passwords do not match.' });
-        return;
-      }
-
       const db = await loadDb();
-      const existing = db.users[cleanEmail];
-      if (existing && existing.verified) {
-        res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+      const taken = findUserByUsername(db, cleanUsername);
+      if (taken) {
+        res.status(409).json({ error: 'That username is already taken! Please choose another one.' });
         return;
       }
 
-      const code = generateSixDigitCode();
-      const expiresAt = Date.now() + 10 * 60 * 1000;
+      const lowerUser = cleanUsername.toLowerCase();
+      const userKey = `user:${lowerUser}`;
+      if (db.users[userKey] || db.users[lowerUser]) {
+        res.status(409).json({ error: 'That username is already taken! Please choose another one.' });
+        return;
+      }
 
       const user: StoredUser = {
-        id: existing?.id || crypto.randomUUID(),
+        id: crypto.randomUUID(),
         username: cleanUsername,
-        email: cleanEmail,
+        email: lowerUser === '354245082@educ.dpcdsb.org' ? lowerUser : '',
         passwordHash: hashPassword(rawPassword),
-        verified: false,
-        verificationCode: code,
-        codeExpiresAt: expiresAt,
-        tokens: existing?.tokens ?? 20,
-        inventory: existing?.inventory ?? {},
-        clickUpgradeLevel: existing?.clickUpgradeLevel ?? 0,
-        bestDailyClicks: existing?.bestDailyClicks ?? 0,
-        equippedBlookId: existing?.equippedBlookId ?? 'tightrope-walker',
-        createdAt: existing?.createdAt || new Date().toISOString(),
+        verified: true,
+        verificationCode: null,
+        codeExpiresAt: null,
+        tokens: 20,
+        inventory: {},
+        clickUpgradeLevel: 0,
+        bestDailyClicks: 0,
+        equippedBlookId: '',
+        createdAt: new Date().toISOString(),
       };
 
-      db.users[cleanEmail] = user;
+      db.users[userKey] = user;
+      const sessionToken = crypto.randomBytes(32).toString('hex');
+      db.sessions[sessionToken] = userKey;
       await saveDb(db);
 
-      const delivery = await dispatchVerificationEmail(cleanEmail, cleanUsername, code);
       res.json({
         ok: true,
-        email: cleanEmail,
-        username: cleanUsername,
-        deliveryMode: delivery.deliveryMode,
-        previewCode: delivery.previewCode,
-        deliveryReason: delivery.deliveryReason,
+        sessionToken,
+        user: sanitizeUser(user),
       });
     } catch (err) {
       console.error('Signup error:', err);
@@ -366,51 +402,37 @@ async function createServer() {
     }
   });
 
-  // Log In
+  // Log In with Username & Password
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const cleanEmail = String(req.body?.email || '').trim().toLowerCase();
+      const identifier = String(req.body?.username || req.body?.email || '').trim();
       const rawPassword = String(req.body?.password || '');
 
-      if (!cleanEmail || !rawPassword) {
-        res.status(400).json({ error: 'Please enter both email and password.' });
+      if (!identifier || !rawPassword) {
+        res.status(400).json({ error: 'Please enter both username and password.' });
         return;
       }
 
       const db = await loadDb();
-      const user = db.users[cleanEmail];
+      const found = findUserEntry(db, identifier);
 
-      if (!user || !verifyPassword(rawPassword, user.passwordHash)) {
-        res.status(401).json({ error: 'Invalid email or password.' });
+      if (!found || !verifyPassword(rawPassword, found.user.passwordHash)) {
+        res.status(401).json({ error: 'Invalid username or password.' });
         return;
       }
 
-      if (!user.verified) {
-        const code = generateSixDigitCode();
-        user.verificationCode = code;
-        user.codeExpiresAt = Date.now() + 10 * 60 * 1000;
-        await saveDb(db);
-
-        const delivery = await dispatchVerificationEmail(cleanEmail, user.username, code);
-        res.json({
-          requiresVerification: true,
-          email: cleanEmail,
-          username: user.username,
-          deliveryMode: delivery.deliveryMode,
-          previewCode: delivery.previewCode,
-          deliveryReason: delivery.deliveryReason,
-        });
-        return;
-      }
+      found.user.verified = true;
+      found.user.verificationCode = null;
+      found.user.codeExpiresAt = null;
 
       const sessionToken = crypto.randomBytes(32).toString('hex');
-      db.sessions[sessionToken] = cleanEmail;
+      db.sessions[sessionToken] = found.key;
       await saveDb(db);
 
       res.json({
         ok: true,
         sessionToken,
-        user: sanitizeUser(user),
+        user: sanitizeUser(found.user),
       });
     } catch (err) {
       console.error('Login error:', err);
@@ -552,6 +574,45 @@ async function createServer() {
     }
   });
 
+  // Rename Username (strictly unique across all accounts)
+  app.post('/api/user/rename', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+      if (!token) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const db = await loadDb();
+      const sessionKey = db.sessions[token];
+      const user = sessionKey ? db.users[sessionKey] : undefined;
+      if (!user) {
+        res.status(401).json({ error: 'Session not found' });
+        return;
+      }
+
+      const cleanUsername = String(req.body?.username || '').trim();
+      if (cleanUsername.length < 2 || cleanUsername.length > 30) {
+        res.status(400).json({ error: 'Username must be between 2 and 30 characters.' });
+        return;
+      }
+
+      const conflict = findUserByUsername(db, cleanUsername);
+      if (conflict && conflict.id !== user.id) {
+        res.status(409).json({ error: 'That username is already taken! Try a different one.' });
+        return;
+      }
+
+      user.username = cleanUsername;
+      await saveDb(db);
+      res.json({ ok: true, user: sanitizeUser(user) });
+    } catch (err) {
+      console.error('Rename error:', err);
+      res.status(500).json({ error: 'Failed to update username.' });
+    }
+  });
+
   // Sync user game progress
   app.post('/api/user/sync', async (req, res) => {
     try {
@@ -581,8 +642,11 @@ async function createServer() {
         lastWheelSpinAt,
       } = req.body ?? {};
 
-      if (typeof username === 'string' && username.trim().length >= 1 && username.trim().length <= 18) {
-        user.username = username.trim();
+      if (typeof username === 'string' && username.trim().length >= 2 && username.trim().length <= 30) {
+        const conflict = findUserByUsername(db, username.trim());
+        if (!conflict || conflict.id === user.id) {
+          user.username = username.trim();
+        }
       }
       if (typeof tokens === 'number' && Number.isFinite(tokens) && tokens >= 0) {
         user.tokens = Math.floor(tokens);
@@ -596,8 +660,12 @@ async function createServer() {
       if (typeof bestDailyClicks === 'number' && Number.isFinite(bestDailyClicks) && bestDailyClicks >= 0) {
         user.bestDailyClicks = Math.max(user.bestDailyClicks, Math.floor(bestDailyClicks));
       }
-      if (typeof equippedBlookId === 'string' && equippedBlookId.trim()) {
-        user.equippedBlookId = equippedBlookId.trim();
+      if (typeof equippedBlookId === 'string') {
+        const cleanId = equippedBlookId.trim();
+        user.equippedBlookId =
+          cleanId && (user.inventory?.[cleanId] || 0) > 0 ? cleanId : '';
+      } else if (user.equippedBlookId && (user.inventory?.[user.equippedBlookId] || 0) <= 0) {
+        user.equippedBlookId = '';
       }
       if (typeof lastDailyPlayAt === 'number' && Number.isFinite(lastDailyPlayAt) && lastDailyPlayAt > 0) {
         user.lastDailyPlayAt = Math.max(user.lastDailyPlayAt ?? 0, lastDailyPlayAt);
@@ -771,6 +839,29 @@ async function createServer() {
     }
   });
 
+  app.get('/api/trades/history', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+      if (!token) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const db = await loadDb();
+      const sessionKey = db.sessions[token];
+      const user = sessionKey ? db.users[sessionKey] : undefined;
+      if (!user) {
+        res.status(401).json({ error: 'Session not found' });
+        return;
+      }
+
+      res.json({ history: (user.tradeHistory || []).slice(0, 50) });
+    } catch {
+      res.status(500).json({ error: 'Failed to load trading history' });
+    }
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
@@ -786,10 +877,86 @@ async function createServer() {
     });
   }
 
+  const executeBlookTrade = async (
+    userIdA: string,
+    blookIdA: string,
+    userIdB: string,
+    blookIdB: string
+  ): Promise<{
+    ok: boolean;
+    error?: string;
+    inventoryA?: Record<string, number>;
+    equippedA?: string;
+    historyEntryA?: TradeHistoryEntry;
+    inventoryB?: Record<string, number>;
+    equippedB?: string;
+    historyEntryB?: TradeHistoryEntry;
+  }> => {
+    const db = await loadDb();
+    const userA = Object.values(db.users).find((u) => u.id === userIdA);
+    const userB = Object.values(db.users).find((u) => u.id === userIdB);
+    if (!userA || !userB) {
+      return { ok: false, error: 'One or both players could not be found.' };
+    }
+    if ((userA.inventory?.[blookIdA] || 0) < 1) {
+      return { ok: false, error: `${userA.username} no longer owns that Blook.` };
+    }
+    if ((userB.inventory?.[blookIdB] || 0) < 1) {
+      return { ok: false, error: `${userB.username} no longer owns that Blook.` };
+    }
+
+    userA.inventory[blookIdA] -= 1;
+    if (userA.inventory[blookIdA] <= 0) delete userA.inventory[blookIdA];
+    userA.inventory[blookIdB] = (userA.inventory[blookIdB] || 0) + 1;
+
+    userB.inventory[blookIdB] -= 1;
+    if (userB.inventory[blookIdB] <= 0) delete userB.inventory[blookIdB];
+    userB.inventory[blookIdA] = (userB.inventory[blookIdA] || 0) + 1;
+
+    if (userA.equippedBlookId && (userA.inventory[userA.equippedBlookId] || 0) <= 0) {
+      userA.equippedBlookId = '';
+    }
+    if (userB.equippedBlookId && (userB.inventory[userB.equippedBlookId] || 0) <= 0) {
+      userB.equippedBlookId = '';
+    }
+
+    const nowIso = new Date().toISOString();
+    const tradeRef = `th-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    const historyEntryA: TradeHistoryEntry = {
+      id: `${tradeRef}-a`,
+      timestamp: nowIso,
+      partnerUsername: userB.username,
+      gaveBlookId: blookIdA,
+      receivedBlookId: blookIdB,
+    };
+    const historyEntryB: TradeHistoryEntry = {
+      id: `${tradeRef}-b`,
+      timestamp: nowIso,
+      partnerUsername: userA.username,
+      gaveBlookId: blookIdB,
+      receivedBlookId: blookIdA,
+    };
+
+    userA.tradeHistory = [historyEntryA, ...(userA.tradeHistory || [])].slice(0, 50);
+    userB.tradeHistory = [historyEntryB, ...(userB.tradeHistory || [])].slice(0, 50);
+
+    await saveDb(db);
+    return {
+      ok: true,
+      inventoryA: { ...userA.inventory },
+      equippedA: userA.equippedBlookId,
+      historyEntryA,
+      inventoryB: { ...userB.inventory },
+      equippedB: userB.equippedBlookId,
+      historyEntryB,
+    };
+  };
+
   const httpServer = http.createServer(app);
   attachMultiplayerServer(httpServer, {
     onRecordSetPlay: recordSetPlay,
     onAwardTokens: awardUserTokens,
+    onExecuteBlookTrade: executeBlookTrade,
   });
 
   httpServer.listen(PORT, '0.0.0.0', () => {
